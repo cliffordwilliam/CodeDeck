@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CodeDeck</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/javascript.min.js"></script>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -168,13 +171,39 @@ html, body {
 <script>
 let currentFrame = 0;
 
-function highlightCode(content, language) {
-  const escaped = content
+function escapeHtml(text) {
+  return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
-  return escaped.split("\n");
+}
+
+function highlightCode(content, language) {
+  if (typeof hljs !== "undefined" && hljs.getLanguage(language)) {
+    const result = hljs.highlight(content, { language });
+    return splitHighlightedLines(result.value);
+  }
+  return escapeHtml(content).split("\n");
+}
+
+function splitHighlightedLines(html) {
+  const lines = html.split("\n");
+  let openSpans = [];
+  return lines.map(line => {
+    const prefix = openSpans.join("");
+    const tagRegex = /<\/span>|<span[^>]*>/g;
+    let match;
+    while ((match = tagRegex.exec(line)) !== null) {
+      if (match[0] === "</span>") {
+        openSpans.pop();
+      } else {
+        openSpans.push(match[0]);
+      }
+    }
+    const suffix = "</span>".repeat(openSpans.length);
+    return prefix + line + suffix;
+  });
 }
 
 function renderTree(tree, selectedFile) {

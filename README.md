@@ -51,7 +51,13 @@ const FRAMES = [
 
 ## Syntax highlighting
 
-CodeDeck renders all code through a single `highlightCode(content, language)` function. By default it returns plain unstyled text. Swap this function with a real highlighter like [Shiki](https://shiki.style/) to get full tokenized syntax coloring using the same grammars and themes as VS Code.
+CodeDeck uses [highlight.js](https://highlightjs.org/) loaded from CDN for syntax highlighting. JavaScript is included by default. To add more languages, add the corresponding `<script>` tag from [cdnjs](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/):
+
+```html
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/python.min.js"></script>
+```
+
+All code passes through a single `highlightCode(content, language)` function. If highlight.js doesn't have the requested language registered, it falls back to plain unstyled text.
 
 ## Roadmap
 
@@ -60,7 +66,7 @@ Things that don't exist yet but probably should:
 - Smooth animated transitions between frames
 - Terminal panel
 - Typing animation mode
-- Syntax highlighting via Shiki
+- Additional highlight.js language packs
 - YAML/Markdown authoring format
 - Export to video via headless browser
 - Presenter notes
