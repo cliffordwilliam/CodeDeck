@@ -121,6 +121,10 @@ html, body {
   flex: 1;
   overflow: auto;
   padding: 8px 0;
+  scrollbar-width: none;
+}
+.code-view::-webkit-scrollbar {
+  display: none;
 }
 
 .line {
@@ -170,6 +174,10 @@ html, body {
 <script src="frames.js"></script>
 <script>
 let currentFrame = 0;
+const _urlFrame = parseInt(new URLSearchParams(location.search).get("frame"), 10);
+if (!isNaN(_urlFrame)) {
+  currentFrame = Math.max(0, Math.min(_urlFrame, FRAMES.length - 1));
+}
 
 function escapeHtml(text) {
   return text

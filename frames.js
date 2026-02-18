@@ -120,6 +120,7 @@ module.exports = { TodoStore };`,
     ],
     selectedFile: "todo-app/src/index.js",
     content: `const { TodoStore } = require("./store");
+const fs = require("fs");
 
 const store = new TodoStore();
 
@@ -162,10 +163,47 @@ store.list("completed").forEach(t => {
   console.log("  " + t.toString());
 });
 
-console.log();`,
+console.log();
+
+// Search functionality
+function search(query) {
+  return store.list().filter(t =>
+    t.title.toLowerCase().includes(query.toLowerCase())
+  );
+}
+
+const results = search("todo");
+console.log(\`\\n--- Search: "todo" ---\`);
+results.forEach(t => console.log("  " + t.toString()));
+
+// Export to JSON
+function saveToFile(path) {
+  const data = store.list().map(t => ({
+    id: t.id,
+    title: t.title,
+    completed: t.completed,
+    createdAt: t.createdAt
+  }));
+  fs.writeFileSync(path, JSON.stringify(data, null, 2));
+  console.log(\`\\nSaved \${data.length} todos to \${path}\`);
+}
+
+// Export to Markdown
+function exportMarkdown(path) {
+  const lines = ["# Todo List", ""];
+  store.list().forEach(t => {
+    const check = t.completed ? "x" : " ";
+    lines.push(\`- [\${check}] \${t.title}\`);
+  });
+  fs.writeFileSync(path, lines.join("\\n") + "\\n");
+  console.log(\`Exported markdown to \${path}\`);
+}
+
+saveToFile("todos.json");
+exportMarkdown("todos.md");`,
     language: "javascript",
-    scrollLine: 28,
-    highlights: [30, 31, 35, 36, 37]
+    scrollLine: 52,
+    highlights: [55, 56, 57, 58, 59, 60]
   }
 ];
 

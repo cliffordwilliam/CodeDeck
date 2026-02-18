@@ -59,18 +59,6 @@ CodeDeck uses [highlight.js](https://highlightjs.org/) loaded from CDN for synta
 
 All code passes through a single `highlightCode(content, language)` function. If highlight.js doesn't have the requested language registered, it falls back to plain unstyled text.
 
-## Roadmap
-
-Things that don't exist yet but probably should:
-
-- Smooth animated transitions between frames
-- Terminal panel
-- Typing animation mode
-- Additional highlight.js language packs
-- YAML/Markdown authoring format
-- Export to video via headless browser
-- Presenter notes
-
 ## License
 
 MIT
