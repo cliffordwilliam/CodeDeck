@@ -27,7 +27,7 @@ Open `index.html` in a browser. Use **Left** / **Right** arrow keys to step thro
 
 Edit `frames.md`. Frames are separated by `---`. Each frame has metadata lines followed by a fenced code block:
 
-```
+~~~
 text: Narration text read aloud during this frame.
 selectedFile: src/index.js
 scrollLine: 5
@@ -36,7 +36,7 @@ highlights: [3, 4, 5]
 ```javascript
 console.log('hello world');
 ```
-```
+~~~
 
 The `text` and `selectedFile` fields are required. The parser builds the file tree automatically from all `selectedFile` paths seen across all frames.
 
