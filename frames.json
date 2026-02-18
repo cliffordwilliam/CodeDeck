@@ -1,4 +1,4 @@
-const FRAMES = [
+[
   {
     "text": "Let's start by looking at the project setup. The package dot json defines our todo app and includes a start script.",
     "tree": [
@@ -127,4 +127,4 @@ const FRAMES = [
       60
     ]
   }
-];
+]
