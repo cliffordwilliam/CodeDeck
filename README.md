@@ -60,6 +60,24 @@ bash build-images.sh
 
 > **Note:** Firefox must be fully closed before running this script. If a Firefox instance is already open, the headless mode will try to reuse the existing session and the screenshots will not be taken.
 
+## Stitching frames into a video
+
+`make_video.sh` stitches the exported PNGs into a video with crossfade transitions using FFmpeg.
+
+**Dependency:**
+
+```sh
+sudo apt install ffmpeg
+```
+
+**Usage:**
+
+```sh
+bash make_video.sh
+```
+
+Output is saved to `output.mp4`. Each frame is shown for 3 seconds with a 1-second crossfade between them. Edit the variables at the top of `make_video.sh` to change duration, fade length, resolution, or output path.
+
 ## Syntax highlighting
 
 CodeDeck uses [highlight.js](https://highlightjs.org/) loaded from CDN for syntax highlighting. JavaScript is included by default. To add more languages, add the corresponding `<script>` tag from [cdnjs](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/):
