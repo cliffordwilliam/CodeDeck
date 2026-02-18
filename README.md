@@ -127,6 +127,57 @@ CodeDeck uses [highlight.js](https://highlightjs.org/) loaded from CDN. JavaScri
 
 If highlight.js doesn't have the requested language registered, it falls back to plain unstyled text.
 
+## Adding Background Music (YouTube Mix)
+
+After generating `output.mp4`, you can add background music suitable for YouTube content.
+
+### Getting Music
+
+You can download royalty-free music from the **YouTube Audio Library** inside **YouTube Studio**:
+
+1. Go to YouTube Studio
+2. Navigate to **Audio Library**
+3. Download a suitable background track (ambient / minimal recommended)
+
+Avoid tracks with strong vocals or aggressive percussion, as they can compete with narration.
+
+## Mixing Voice + Music with FFmpeg
+
+The following command:
+
+* Keeps narration clear and upfront
+* EQs the music to avoid competing with speech
+* Automatically ducks music when voice is present
+* Compresses narration for consistency
+* Outputs YouTube-friendly AAC audio
+
+```bash
+ffmpeg -i output.mp4 -i "On The Flip - The Grey Room _ Density & Time.mp3" \
+-filter_complex "\
+[1:a]volume=0.18,highpass=f=120,lowpass=f=8000, \
+equalizer=f=2000:t=q:w=1:g=-6[a_music]; \
+[a_music][0:a]sidechaincompress=threshold=0.02:ratio=10:attack=15:release=400[ducked]; \
+[0:a]acompressor=threshold=-18dB:ratio=3:attack=5:release=100[voice]; \
+[voice][ducked]amix=inputs=2:weights=2 1:duration=first:dropout_transition=2[aout]" \
+-map 0:v -map "[aout]" \
+-c:v copy -c:a aac -b:a 192k -shortest final.mp4
+```
+
+### Output
+
+Produces:
+
+```
+final.mp4
+```
+
+This version:
+
+* Prioritizes narration clarity
+* Keeps music subtle and non-distracting
+* Automatically matches video duration
+* Is optimized for YouTube loudness normalization
+
 ## License
 
 MIT

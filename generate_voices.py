@@ -18,7 +18,7 @@ def main():
     model = TTSModel.load_model()
 
     print("Loading voice...")
-    voice_state = model.get_state_for_audio_prompt("alba")
+    voice_state = model.get_state_for_audio_prompt("eponine")
 
     total = len(frames)
     for i, frame in enumerate(frames):

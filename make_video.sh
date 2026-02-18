@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # ── Configuration ────────────────────────────────────────────────────────────
-FADE_DURATION=1        # seconds for crossfade transition
+FADE_DURATION=1.5      # seconds for crossfade transition
+HOLD_DURATION=1.5      # seconds to hold each frame after audio ends, before fading
 DEFAULT_DURATION=3     # fallback seconds when no audio file is found
 WIDTH=1920
 HEIGHT=1080
@@ -25,6 +26,7 @@ fi
 
 echo "Found $NUM_FRAMES frame(s)"
 echo "Fade duration  : ${FADE_DURATION}s"
+echo "Hold duration  : ${HOLD_DURATION}s"
 
 # ── Probe per-frame audio durations ──────────────────────────────────────────
 DURATIONS=()
@@ -78,7 +80,7 @@ INPUT_ARGS=()
 # Each is extended by FADE_DURATION so that the intermediate xfade streams
 # have enough data to cover the overlap period into the next transition.
 for (( i=0; i<NUM_FRAMES; i++ )); do
-    EXTENDED_DUR=$(echo "${DURATIONS[$i]} + $FADE_DURATION" | bc)
+    EXTENDED_DUR=$(echo "${DURATIONS[$i]} + $HOLD_DURATION + $FADE_DURATION" | bc)
     INPUT_ARGS+=(-loop 1 -t "$EXTENDED_DUR" -i "${FRAMES[$i]}")
 done
 
@@ -111,14 +113,14 @@ done
 # i.e. at sum(dur[0..k]). So the crossfade STARTS at sum(dur[0..k]) - FADE_DURATION.
 #   offset[0] = dur[0] - FADE_DURATION
 #   offset[k] = offset[k-1] + dur[k]   (accumulate the full previous duration)
-running_offset=$(echo "${DURATIONS[0]} - $FADE_DURATION" | bc)
+running_offset=$(echo "${DURATIONS[0]} + $HOLD_DURATION - $FADE_DURATION" | bc)
 
 if [[ $NUM_FRAMES -eq 2 ]]; then
     FILTER+="[v0][v1]xfade=transition=fade:duration=${FADE_DURATION}:offset=${running_offset}[vout]"
 else
     FILTER+="[v0][v1]xfade=transition=fade:duration=${FADE_DURATION}:offset=${running_offset}[xf1];"
     for (( k=2; k<NUM_FRAMES; k++ )); do
-        running_offset=$(echo "$running_offset + ${DURATIONS[$((k-1))]}" | bc)
+        running_offset=$(echo "$running_offset + ${DURATIONS[$((k-1))]} + $HOLD_DURATION" | bc)
         PREV="xf$((k-1))"
         if [[ $k -eq $((NUM_FRAMES - 1)) ]]; then
             FILTER+="[${PREV}][v${k}]xfade=transition=fade:duration=${FADE_DURATION}:offset=${running_offset}[vout]"
@@ -134,10 +136,11 @@ AUDIO_CONCAT_INPUTS=""
 for (( i=0; i<NUM_FRAMES; i++ )); do
     if [[ "${HAS_AUDIO[$i]}" -eq 1 ]]; then
         IDX=${AUDIO_INPUT_IDX_FOR_FRAME[$i]}
-        FILTER+=";[${IDX}:a]anull[a${i}]"
+        FILTER+=";[${IDX}:a]apad=pad_dur=${HOLD_DURATION}[a${i}]"
         AUDIO_CONCAT_INPUTS+="[a${i}]"
     else
-        FILTER+=";aevalsrc=0:s=${AUDIO_SAMPLE_RATE}:d=${DURATIONS[$i]}[a${i}]"
+        SILENCE_DUR=$(echo "${DURATIONS[$i]} + $HOLD_DURATION" | bc)
+        FILTER+=";aevalsrc=0:s=${AUDIO_SAMPLE_RATE}:d=${SILENCE_DUR}[a${i}]"
         AUDIO_CONCAT_INPUTS+="[a${i}]"
     fi
 done
@@ -146,7 +149,7 @@ FILTER+=";${AUDIO_CONCAT_INPUTS}concat=n=${NUM_FRAMES}:v=0:a=1[aout]"
 # Total duration = sum of all audio durations.
 # The video naturally produces exactly this length once inputs are extended by
 # FADE_DURATION and offsets are correct — no crossfade time needs to be subtracted.
-TOTAL_DURATION=$(echo "${DURATIONS[*]}" | tr ' ' '+' | bc)
+TOTAL_DURATION=$(echo "$(echo "${DURATIONS[*]}" | tr ' ' '+') + $NUM_FRAMES * $HOLD_DURATION" | bc)
 
 echo "Building filtergraph for $NUM_FRAMES frames..."
 echo "Total output duration: ${TOTAL_DURATION}s"

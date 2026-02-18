@@ -1,190 +1,132 @@
-text: Let's start by looking at the project setup. The package dot json defines our todo app and includes a start script.
-selectedFile: todo-app/package.json
+text: Welcome! In this tutorial, we’re building a modular Express Middleware system. We'll start with the package.json to define our dependencies and the start script for our server.
+selectedFile: server-demo/package.json
 scrollLine: 0
-highlights: [4, 5]
+highlights: [7, 8, 9, 10, 11]
 
 ```json
 {
-    "name": "todo-app",
-    "version": "1.0.0",
-    "scripts": {
-      "start": "node src/index.js",
-    }
+  "name": "express-middleware-demo",
+  "version": "1.0.0",
+  "description": "A demo of custom middleware in Express",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
 }
+
 ```
 
 ---
 
-text: Next, we define the Todo class. It tracks an id, title, and completion status, with a toggle method to flip the state.
-selectedFile: todo-app/src/todo.js
+text: First, we create a logger middleware. This function intercepts every request to log the HTTP method and the URL along with a timestamp to the console.
+selectedFile: server-demo/middleware/logger.js
 scrollLine: 0
-highlights: [1, 9, 10, 11]
+highlights: [1, 2, 3, 4, 5]
 
 ```javascript
-class Todo {
-  constructor(title) {
-    this.id = Date.now();
-    this.title = title;
-    this.completed = false;
-    this.createdAt = new Date();
-  }
+const requestLogger = (req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} request to ${req.url}`);
+  next();
+};
 
-  toggle() {
-    this.completed = !this.completed;
-    return this;
-  }
+module.exports = requestLogger;
 
-  toString() {
-    const status = this.completed ? "✓" : "○";
-    return `${status} ${this.title}`;
-  }
-}
-
-module.exports = { Todo };
 ```
 
 ---
 
-text: The store layer wraps an array of todos and provides add, remove, toggle, list, and counts operations.
-selectedFile: todo-app/src/store.js
+text: Next, we implement an authentication middleware. It checks for an authorization header; if it's missing, it blocks the request and returns a 401 Unauthorized status.
+selectedFile: server-demo/middleware/auth.js
 scrollLine: 0
-highlights: [8, 9, 10, 11]
+highlights: [1, 2, 3, 5, 6, 7, 10]
 
 ```javascript
-const { Todo } = require("./todo");
-
-class TodoStore {
-  constructor() {
-    this.todos = [];
+const fakeAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  
+  if (!authHeader) {
+    return res.status(401).json({ 
+      error: "Unauthorized: No token provided" 
+    });
   }
+  
+  next();
+};
 
-  add(title) {
-    const todo = new Todo(title);
-    this.todos.push(todo);
-    return todo;
-  }
+module.exports = fakeAuth;
 
-  remove(id) {
-    this.todos = this.todos.filter(t => t.id !== id);
-  }
-
-  toggle(id) {
-    const todo = this.todos.find(t => t.id === id);
-    if (todo) todo.toggle();
-    return todo;
-  }
-
-  list(filter = "all") {
-    switch (filter) {
-      case "active":
-        return this.todos.filter(t => !t.completed);
-      case "completed":
-        return this.todos.filter(t => t.completed);
-      default:
-        return [...this.todos];
-    }
-  }
-
-  get counts() {
-    return {
-      total: this.todos.length,
-      active: this.todos.filter(t => !t.completed).length,
-      completed: this.todos.filter(t => t.completed).length
-    };
-  }
-}
-
-module.exports = { TodoStore };
 ```
 
 ---
 
-text: Finally, the entry point wires everything together — adding todos, toggling completion, filtering by status, and exporting to JSON and Markdown.
-selectedFile: todo-app/src/index.js
-scrollLine: 52
-highlights: [55, 56, 57, 58, 59, 60]
+text: Now we assemble everything in index.js. We'll apply the logger globally and use the auth middleware specifically to protect our dashboard route.
+selectedFile: server-demo/index.js
+scrollLine: 0
+highlights: [2, 3, 9, 17]
 
 ```javascript
-const { TodoStore } = require("./store");
-const fs = require("fs");
+const express = require('express');
+const logger = require('./middleware/logger');
+const auth = require('./middleware/auth');
 
-const store = new TodoStore();
+const app = express();
+const PORT = 3000;
 
-// Add some sample todos
-store.add("Set up project structure");
-store.add("Implement Todo class");
-store.add("Build the store layer");
-store.add("Write the CLI interface");
-store.add("Add persistence with JSON file");
-store.add("Write unit tests");
-store.add("Add due dates feature");
-store.add("Implement priority levels");
-store.add("Add search functionality");
-store.add("Create export to markdown");
+// Global Middleware
+app.use(logger);
 
-// Mark first few as completed
-store.toggle(store.todos[0].id);
-store.toggle(store.todos[1].id);
-store.toggle(store.todos[2].id);
-
-// Display current state
-console.log("\n--- Todo App ---\n");
-
-const all = store.list();
-all.forEach(todo => {
-  console.log("  " + todo.toString());
+// Public Route
+app.get('/', (req, res) => {
+  res.send('Welcome to the Public API!');
 });
 
-const { total, active, completed } = store.counts;
-console.log(`\n  ${completed}/${total} completed, ${active} remaining\n`);
-
-// Filter examples
-console.log("--- Active ---");
-store.list("active").forEach(t => {
-  console.log("  " + t.toString());
+// Protected Route
+app.get('/api/dashboard', auth, (req, res) => {
+  res.json({ data: "Sensitive information." });
 });
 
-console.log("\n--- Completed ---");
-store.list("completed").forEach(t => {
-  console.log("  " + t.toString());
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-console.log();
-
-// Search functionality
-function search(query) {
-  return store.list().filter(t =>
-    t.title.toLowerCase().includes(query.toLowerCase())
-  );
-}
-
-const results = search("todo");
-console.log(`\n--- Search: "todo" ---`);
-results.forEach(t => console.log("  " + t.toString()));
-
-// Export to JSON
-function saveToFile(path) {
-  const data = store.list().map(t => ({
-    id: t.id,
-    title: t.title,
-    completed: t.completed,
-    createdAt: t.createdAt
-  }));
-  fs.writeFileSync(path, JSON.stringify(data, null, 2));
-  console.log(`\nSaved ${data.length} todos to ${path}`);
-}
-
-// Export to Markdown
-function exportMarkdown(path) {
-  const lines = ["# Todo List", ""];
-  store.list().forEach(t => {
-    const check = t.completed ? "x" : " ";
-    lines.push(`- [${check}] ${t.title}`);
-  });
-  fs.writeFileSync(path, lines.join("\n") + "\n");
-  console.log(`Exported markdown to ${path}`);
-}
-
-saveToFile("todos.json");
-exportMarkdown("todos.md");
 ```
+
+---
+
+text: That's it! You've built a modular server. Using middleware keeps your code clean and organized. Thanks for watching, and happy coding!
+selectedFile: server-demo/index.js
+scrollLine: 15
+highlights: [21, 22, 23]
+
+```javascript
+const express = require('express');
+const logger = require('./middleware/logger');
+const auth = require('./middleware/auth');
+
+const app = express();
+const PORT = 3000;
+
+// Global Middleware
+app.use(logger);
+
+// Public Route
+app.get('/', (req, res) => {
+  res.send('Welcome to the Public API!');
+});
+
+// Protected Route
+app.get('/api/dashboard', auth, (req, res) => {
+  res.json({ data: "Sensitive information." });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+```
+
+---
