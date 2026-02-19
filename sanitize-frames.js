@@ -165,20 +165,20 @@ function sanitizeFile(src) {
   return { result: out.join('\n'), substitutions: totalSubstitutions };
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
-const mdPath = process.argv[2];
-if (!mdPath) {
-  console.error('Usage: node sanitize-frames.js <frames.md>');
-  process.exit(1);
-}
+// ── Exports ───────────────────────────────────────────────────────────────────
+module.exports = { sanitizeFile, sanitizeText };
 
-const src = fs.readFileSync(mdPath, 'utf8');
-const { result, substitutions } = sanitizeFile(src);
+// ── Main (only when invoked directly) ─────────────────────────────────────────
+if (require.main === module) {
+  const mdPath = process.argv[2];
+  if (!mdPath) {
+    console.error('Usage: node sanitize-frames.js <frames.md>');
+    process.exit(1);
+  }
 
-if (result === src) {
-  console.log('No changes needed: ' + mdPath);
-} else {
-  fs.writeFileSync(mdPath, result, 'utf8');
-  const s = substitutions === 1 ? 'substitution' : 'substitutions';
-  console.log(`Sanitized: ${mdPath} (${substitutions} TTS ${s} made)`);
+  const src = fs.readFileSync(mdPath, 'utf8');
+  const { result } = sanitizeFile(src);
+  if (result !== src) {
+    fs.writeFileSync(mdPath, result, 'utf8');
+  }
 }

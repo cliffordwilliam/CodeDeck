@@ -2,6 +2,7 @@
 'use strict';
 
 const fs = require('fs');
+const { sanitizeFile } = require('./sanitize-frames');
 
 const mdPath = process.argv[2];
 if (!mdPath) {
@@ -9,7 +10,13 @@ if (!mdPath) {
   process.exit(1);
 }
 
-const src = fs.readFileSync(mdPath, 'utf8');
+let src = fs.readFileSync(mdPath, 'utf8');
+const { result } = sanitizeFile(src);
+if (result !== src) {
+  fs.writeFileSync(mdPath, result, 'utf8');
+  src = result;
+}
+
 const rawFrames = src.split(/^---$/m).filter(f => f.trim());
 
 let failed = false;
