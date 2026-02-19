@@ -14,6 +14,8 @@ No timeline editors. No drag and drop. No render times. Just declare your states
 │   └── my-video.md
 ├── videos/                 # rendered output (gitignored)
 │   └── my-video.mp4
+├── bg-music/               # background music tracks (gitignored)
+│   └── some-track.mp3
 ├── index.html              # the viewer
 ├── frames.json             # generated intermediate data
 ├── frames.js               # generated presentation data (loaded by index.html)
@@ -124,14 +126,14 @@ Output is saved to `videos/` using the filename passed via the `OUTPUT` env var 
 
 ## Background music
 
-If a file named `"On The Flip - The Grey Room _ Density & Time.mp3"` (or whatever is set as `MUSIC_FILE` at the top of `make_video.sh`) exists in the project root, `make_video.sh` will automatically mix it into the final video:
+Drop any audio file (`.mp3`, `.wav`, `.flac`, `.m4a`) into the `bg-music/` directory and `make_video.sh` will automatically pick it up and mix it into the final video. The first file found (alphabetically) is used, so just keep one track in there at a time:
 
 - Music is low-pass/high-pass filtered and EQ'd to avoid competing with narration
 - Sidechain compression ducks the music whenever voice is present
 - Narration is lightly compressed for consistency
 - Output is loudness-normalised to YouTube's target (-14 LUFS)
 
-To use a different track, update `MUSIC_FILE` in `make_video.sh`. If the file is absent, the step is silently skipped.
+To swap tracks, just replace the file in `bg-music/`. If the directory is empty, the music step is silently skipped.
 
 You can download royalty-free tracks from the **YouTube Audio Library** inside YouTube Studio. Ambient / minimal instrumental tracks work best.
 

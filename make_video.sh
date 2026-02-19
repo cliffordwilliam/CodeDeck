@@ -9,7 +9,8 @@ WIDTH=1920
 HEIGHT=1080
 FPS=30
 OUTPUT="${OUTPUT:-videos/output.mp4}"
-MUSIC_FILE="On The Flip - The Grey Room _ Density & Time.mp3"
+MUSIC_DIR="./bg-music"
+MUSIC_FILE=$(find "$MUSIC_DIR" -maxdepth 1 -type f \( -iname "*.mp3" -o -iname "*.wav" -o -iname "*.flac" -o -iname "*.m4a" \) | sort | head -n 1)
 IMAGES_DIR="./images"
 AUDIO_DIR="./audio"
 AUDIO_SAMPLE_RATE=24000
@@ -17,8 +18,8 @@ AUDIO_SAMPLE_RATE=24000
 
 # ── Music mixing helper ───────────────────────────────────────────────────────
 mix_music() {
-    if [[ -f "$MUSIC_FILE" ]]; then
-        echo "Mixing in background music: $MUSIC_FILE"
+    if [[ -n "$MUSIC_FILE" && -f "$MUSIC_FILE" ]]; then
+        echo "Mixing in background music: $(basename "$MUSIC_FILE")"
         local TMP="videos/output_music_tmp.mp4"
         ffmpeg -y \
             -i "$OUTPUT" \
