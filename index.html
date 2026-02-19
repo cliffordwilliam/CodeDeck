@@ -34,7 +34,7 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: 24px;
 }
 
 .container {
@@ -43,23 +43,23 @@ html, body {
 }
 
 .sidebar {
-  width: 260px;
-  min-width: 260px;
+  width: 460px;
+  min-width: 460px;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--separator);
   overflow-y: auto;
-  padding: 12px 0;
+  padding: 20px 0;
 }
 
 .tree-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 12px;
+  gap: 10px;
+  padding: 6px 20px;
   cursor: default;
   white-space: nowrap;
-  font-size: 13px;
-  line-height: 22px;
+  font-size: 22px;
+  line-height: 40px;
   color: var(--file-color);
 }
 
@@ -74,9 +74,9 @@ html, body {
 
 .tree-icon {
   flex-shrink: 0;
-  width: 16px;
+  width: 28px;
   text-align: center;
-  font-size: 12px;
+  font-size: 20px;
 }
 
 .tree-label {
@@ -96,10 +96,10 @@ html, body {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 8px 16px;
+  padding: 14px 28px;
   background: var(--breadcrumb-bg);
   border-bottom: 1px solid var(--separator);
-  font-size: 12px;
+  font-size: 20px;
   color: var(--text-dim);
   flex-shrink: 0;
 }
@@ -120,7 +120,7 @@ html, body {
 .code-view {
   flex: 1;
   overflow: auto;
-  padding: 8px 0;
+  padding: 14px 0;
   scrollbar-width: none;
 }
 .code-view::-webkit-scrollbar {
@@ -129,23 +129,23 @@ html, body {
 
 .line {
   display: flex;
-  line-height: 22px;
-  min-height: 22px;
+  line-height: 40px;
+  min-height: 40px;
 }
 
 .line.highlighted {
   background: var(--highlight-bg);
-  box-shadow: inset 3px 0 0 var(--highlight-border);
+  box-shadow: inset 5px 0 0 var(--highlight-border);
 }
 
 .line-number {
   flex-shrink: 0;
-  width: 56px;
-  padding-right: 16px;
+  width: 100px;
+  padding-right: 28px;
   text-align: right;
   color: var(--line-number);
   user-select: none;
-  font-size: 13px;
+  font-size: 22px;
 }
 
 .line.highlighted .line-number {
@@ -155,10 +155,10 @@ html, body {
 .line-content {
   flex: 1;
   min-width: 0;
-  padding-right: 16px;
+  padding-right: 28px;
   white-space: pre;
   tab-size: 2;
-  font-size: 13px;
+  font-size: 22px;
 }
 </style>
 </head>
@@ -260,7 +260,7 @@ function renderCode(content, language, highlights, scrollLine) {
   }).join("");
 
   if (scrollLine > 0) {
-    const lineHeight = 22;
+    const lineHeight = 40;
     const viewHeight = codeView.clientHeight;
     const scrollTop = Math.max(0, scrollLine * lineHeight - viewHeight / 3);
     codeView.scrollTop = scrollTop;
