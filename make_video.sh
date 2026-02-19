@@ -8,11 +8,37 @@ DEFAULT_DURATION=3     # fallback seconds when no audio file is found
 WIDTH=1920
 HEIGHT=1080
 FPS=30
-OUTPUT="output.mp4"
+OUTPUT="${OUTPUT:-videos/output.mp4}"
+MUSIC_FILE="On The Flip - The Grey Room _ Density & Time.mp3"
 IMAGES_DIR="./images"
 AUDIO_DIR="./audio"
 AUDIO_SAMPLE_RATE=24000
 # ─────────────────────────────────────────────────────────────────────────────
+
+# ── Music mixing helper ───────────────────────────────────────────────────────
+mix_music() {
+    if [[ -f "$MUSIC_FILE" ]]; then
+        echo "Mixing in background music: $MUSIC_FILE"
+        local TMP="videos/output_music_tmp.mp4"
+        ffmpeg -y \
+            -i "$OUTPUT" \
+            -i "$MUSIC_FILE" \
+            -filter_complex "\
+[1:a]volume=0.25,highpass=f=120,lowpass=f=8000,\
+equalizer=f=2000:t=q:w=1:g=-6[a_music];\
+[a_music][0:a]sidechaincompress=threshold=0.02:ratio=10:attack=15:release=400[ducked];\
+[0:a]acompressor=threshold=-24dB:ratio=3:attack=5:release=100:makeup=6dB[voice];\
+[voice][ducked]amix=inputs=2:weights=2 1:duration=first:dropout_transition=2,\
+loudnorm=I=-14:TP=-1:LRA=11[aout]" \
+            -map 0:v -map "[aout]" \
+            -c:v copy -c:a aac -b:a 192k -shortest \
+            "$TMP"
+        mv "$TMP" "$OUTPUT"
+        echo "Done. Output with music: $OUTPUT"
+    else
+        echo "Music file not found, skipping music mix. Output: $OUTPUT"
+    fi
+}
 
 # Collect frames sorted numerically
 mapfile -t FRAMES < <(find "$IMAGES_DIR" -maxdepth 1 -name "frame-*.png" | sort -V)
@@ -70,6 +96,7 @@ if [[ $NUM_FRAMES -eq 1 ]]; then
             "$OUTPUT"
     fi
     echo "Done. Output: $OUTPUT  (duration: ${DURATIONS[0]}s)"
+    mix_music
     exit 0
 fi
 
@@ -165,3 +192,4 @@ ffmpeg -y \
     "$OUTPUT"
 
 echo "Done. Output: $OUTPUT  (duration: ${TOTAL_DURATION}s)"
+mix_music
