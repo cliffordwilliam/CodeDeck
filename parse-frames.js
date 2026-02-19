@@ -69,6 +69,9 @@ function parseFrame(raw, frameIndex, seenFiles) {
   let codeFence = '';
   let codeLang = '';
   const codeLines = [];
+  const highlights = [];
+  const hlMarker = /\s*\/\/\s*hl\s*$/;
+  let currentKey = null;
 
   for (const line of lines) {
     if (!inCodeBlock) {
@@ -78,13 +81,18 @@ function parseFrame(raw, frameIndex, seenFiles) {
         codeFence = fenceMatch[1];
         codeLang = fenceMatch[2] || '';
         inCodeBlock = true;
+        currentKey = null;
       } else {
         // Parse key: value metadata (key must be a bare word)
         const colonIdx = line.indexOf(':');
-        if (colonIdx > 0) {
-          const key = line.slice(0, colonIdx).trim();
+        const potentialKey = colonIdx > 0 ? line.slice(0, colonIdx).trim() : '';
+        if (colonIdx > 0 && /^\w+$/.test(potentialKey)) {
           const val = line.slice(colonIdx + 1).trim();
-          if (/^\w+$/.test(key)) meta[key] = val;
+          meta[potentialKey] = val;
+          currentKey = potentialKey;
+        } else if (currentKey && line.trim()) {
+          // Continuation line — append to the current metadata value
+          meta[currentKey] += ' ' + line.trim();
         }
       }
     } else {
@@ -92,9 +100,20 @@ function parseFrame(raw, frameIndex, seenFiles) {
       if (line.trimEnd() === codeFence) {
         inCodeBlock = false;
       } else {
-        codeLines.push(line);
+        if (hlMarker.test(line)) {
+          highlights.push(codeLines.length + 1);
+          codeLines.push(line.replace(hlMarker, ''));
+        } else {
+          codeLines.push(line);
+        }
       }
     }
+  }
+
+  if (codeLines.length > 24) {
+    throw new Error(
+      `Frame ${frameIndex + 1}: code block has ${codeLines.length} lines — max is 24 (no scrolling).`
+    );
   }
 
   if (!meta.text) {
@@ -104,19 +123,6 @@ function parseFrame(raw, frameIndex, seenFiles) {
     throw new Error(`Frame ${frameIndex + 1}: missing required field "selectedFile"`);
   }
 
-  const scrollLine = meta.scrollLine !== undefined ? parseInt(meta.scrollLine, 10) : 0;
-
-  let highlights = [];
-  if (meta.highlights) {
-    const m = meta.highlights.match(/\[([^\]]*)\]/);
-    if (m && m[1].trim()) {
-      highlights = m[1]
-        .split(',')
-        .map(s => parseInt(s.trim(), 10))
-        .filter(n => !isNaN(n));
-    }
-  }
-
   seenFiles.push(meta.selectedFile);
 
   return {
@@ -124,8 +130,7 @@ function parseFrame(raw, frameIndex, seenFiles) {
     tree: buildTree([...seenFiles]),
     selectedFile: meta.selectedFile,
     content: codeLines.join('\n'),
-    language: codeLang,
-    scrollLine,
+    language: meta.language || codeLang,
     highlights,
   };
 }

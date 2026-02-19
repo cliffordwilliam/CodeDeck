@@ -23,7 +23,7 @@ mix_music() {
         local TMP="videos/output_music_tmp.mp4"
         ffmpeg -y \
             -i "$OUTPUT" \
-            -i "$MUSIC_FILE" \
+            -stream_loop -1 -i "$MUSIC_FILE" \
             -filter_complex "\
 [1:a]volume=0.25,highpass=f=120,lowpass=f=8000,\
 equalizer=f=2000:t=q:w=1:g=-6[a_music];\
