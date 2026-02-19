@@ -17,8 +17,8 @@ No timeline editors. No drag and drop. No render times. Just declare your states
 ├── bg-music/               # background music tracks (gitignored)
 │   └── some-track.mp3
 ├── index.html              # the viewer
-├── frames.json             # generated intermediate data
-├── frames.js               # generated presentation data (loaded by index.html)
+├── frames.json             # generated intermediate data (gitignored)
+├── frames.js               # generated presentation data (gitignored)
 ├── parse-frames.js         # Node.js parser: *.md → frames.json
 ├── generate_voices.py      # TTS audio generator (pocket-tts)
 ├── build-images.sh         # export frames as PNG screenshots (Firefox headless)
